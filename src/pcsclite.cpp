@@ -69,13 +69,18 @@ postServiceCheck:
 
     LONG result;
     // TODO: consider removing this do-while Windows workaround that should not be needed anymore
+	INT retry = 0;
     do {
+		if (retry > 0) {
+			Sleep(100 * retry);
+		}
+
         // TODO: make dwScope (now hard-coded to SCARD_SCOPE_SYSTEM) customisable
         result = SCardEstablishContext(SCARD_SCOPE_SYSTEM,
                                             NULL,
                                             NULL,
                                             &m_card_context);
-    } while(result == SCARD_E_NO_SERVICE || result == SCARD_E_SERVICE_STOPPED);
+    } while((result == SCARD_E_NO_SERVICE || result == SCARD_E_SERVICE_STOPPED) && retry++ < 3);
     if (result != SCARD_S_SUCCESS) {
         Nan::ThrowError(error_msg("SCardEstablishContext", result).c_str());
     } else {
